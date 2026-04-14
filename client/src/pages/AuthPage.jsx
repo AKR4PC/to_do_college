@@ -1,49 +1,46 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login, signup } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 export default function AuthPage() {
-  const [mode, setMode]     = useState('login'); // 'login' | 'signup'
-  const [form, setForm]     = useState({ name: '', email: '', password: '' });
+  const [mode, setMode] = useState('login');
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
-  const { saveAuth }        = useAuth();
-  const navigate            = useNavigate();
+  const { saveAuth } = useAuth();
+  const navigate = useNavigate();
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.email || !form.password) return;
-    if (mode === 'signup' && !form.name) return;
+    if (!form.email) return;
     setLoading(true);
-    try {
-      const data = mode === 'login'
-        ? await login({ email: form.email, password: form.password })
-        : await signup(form);
-      saveAuth(data);
-      toast.success(`Welcome${data.user.name ? ', ' + data.user.name : ''}! 👋`);
-      navigate('/');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Something went wrong');
-    } finally {
-      setLoading(false);
-    }
+
+    // Demo mode — no backend needed
+    await new Promise(r => setTimeout(r, 600)); // fake loading feel
+
+    const name = form.name || form.email.split('@')[0];
+    const fakeUser = {
+      _id: 'demo-user-001',
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      email: form.email,
+      teamName: 'My Team',
+    };
+
+    saveAuth({ token: 'demo-token-' + Date.now(), user: fakeUser });
+    toast.success(`Welcome, ${fakeUser.name}! 👋`);
+    setLoading(false);
+    navigate('/');
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'var(--bg-app)' }}
-    >
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg-app)' }}>
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3"
-            style={{ background: 'var(--text-primary)' }}
-          >
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3"
+            style={{ background: 'var(--text-primary)' }}>
             <span className="text-2xl font-extrabold" style={{ color: 'var(--bg-app)' }}>T</span>
           </div>
           <h1 className="text-2xl font-extrabold" style={{ color: 'var(--text-primary)' }}>
@@ -55,16 +52,12 @@ export default function AuthPage() {
         </div>
 
         {/* Card */}
-        <div
-          className="rounded-2xl p-6 shadow-xl"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
-        >
+        <div className="rounded-2xl p-6 shadow-xl"
+          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {mode === 'signup' && (
               <div>
-                <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'var(--text-muted)' }}>
-                  FULL NAME
-                </label>
+                <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'var(--text-muted)' }}>FULL NAME</label>
                 <input
                   value={form.name}
                   onChange={e => set('name', e.target.value)}
@@ -76,23 +69,20 @@ export default function AuthPage() {
             )}
 
             <div>
-              <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'var(--text-muted)' }}>
-                EMAIL
-              </label>
+              <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'var(--text-muted)' }}>EMAIL</label>
               <input
                 type="email"
                 value={form.email}
                 onChange={e => set('email', e.target.value)}
                 placeholder="you@example.com"
+                required
                 style={{ background: 'var(--border)', color: 'var(--text-primary)', border: '1.5px solid transparent' }}
                 className="w-full rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-[#4f8ef7] transition-colors"
               />
             </div>
 
             <div>
-              <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'var(--text-muted)' }}>
-                PASSWORD
-              </label>
+              <label className="text-[11px] font-bold mb-1.5 block" style={{ color: 'var(--text-muted)' }}>PASSWORD</label>
               <input
                 type="password"
                 value={form.password}
@@ -124,6 +114,11 @@ export default function AuthPage() {
             </button>
           </p>
         </div>
+
+        {/* Demo hint */}
+        <p className="text-center text-[11px] mt-4" style={{ color: 'var(--text-muted)' }}>
+          Demo mode — enter any email to continue
+        </p>
       </div>
     </div>
   );
